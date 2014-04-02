@@ -2,7 +2,6 @@ package s260344611;
 
 import java.util.ArrayList;
 import java.util.Random;
-import java.util.Vector;
 
 import boardgame.Board;
 import boardgame.Move;
