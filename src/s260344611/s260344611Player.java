@@ -1,4 +1,4 @@
-package halma;
+package s260344611;
 
 import java.util.ArrayList;
 import java.util.Random;
@@ -7,6 +7,7 @@ import java.util.Vector;
 import boardgame.Board;
 import boardgame.Move;
 import boardgame.Player;
+import halma.*;
 
 
 public class s260344611Player extends Player {
