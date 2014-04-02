@@ -1,0 +1,1 @@
+1	Human	random	random	random	UNDECIDED	NOBODY	18	game00001.log	USER CANCEL
