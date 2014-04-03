@@ -1,7 +1,11 @@
 package boardgame;
 import boardgame.*;
+import halma.CCMove;
+
 import java.awt.*;
 import java.awt.event.*;
+import java.util.ArrayList;
+
 import javax.swing.*;
 
 /** Abstract class to run human client with GUI. Subclasses 
@@ -61,6 +65,7 @@ abstract public class HumanPlayer extends Player
 		    theLabel.setText( "Please enter a move..." );
 		    thePanel.requestMove(myself); 
 		} } );
+	
 	// Sleep until we have the move
 	while( moveNeeded && myMove  == null )
 	    try { this.wait(); } 
