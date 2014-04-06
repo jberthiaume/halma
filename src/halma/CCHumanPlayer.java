@@ -1,4 +1,7 @@
 package halma;
+import java.util.ArrayList;
+import java.util.Random;
+
 import boardgame.*;
 
 /** Human Halma client with GUI.
@@ -7,8 +10,8 @@ import boardgame.*;
  *  human player has time to enter a move.
  */
 public class CCHumanPlayer extends HumanPlayer {
-
     public CCHumanPlayer() { super( new CCBoard() ); } 
     public Board createBoard() { return new CCBoard(); }
+    
 }
 
