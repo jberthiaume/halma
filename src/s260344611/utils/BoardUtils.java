@@ -105,12 +105,11 @@ public class BoardUtils {
 	private static ArrayList<Point> reachedGoals = new ArrayList<Point>();
 
 	// weighting constants for evaluation function
-	private static final int CONST_A = 8; 	//difference between start and end locations
+	private static final int CONST_A = 10; 	//difference between start and end locations
 	private static final int CONST_B = 20;	//distance from goal at start of move
 	private static final int CONST_C = 30;	//distance from center of board (after move)
-	private static final int CONST_D = 10;	//distance from edge (before move)
-	private static final int CONST_E = -30; //stranded pieces
-	private static final int CONST_F = 100; //goal area
+	private static final int CONST_D = -50; //stranded pieces
+	private static final int CONST_E = 100; //goal area
 	
 	@SuppressWarnings("unchecked")
 	public static void initPlayerBases() {
@@ -150,10 +149,8 @@ public class BoardUtils {
     }
     
     public static int computeDistanceToCenter(Point a, int playerID) {
-    	if (playerID == 0 || playerID == 3) 
-    		return Math.abs( (a.y-a.x+1)/2 );
-    	else
-    		return 8 - Math.abs( (a.y-a.x+1)/2 );
+    	Point testPoint = convertToPlayerZero(a, playerID);
+    	return 8 - Math.abs( (testPoint.y-testPoint.x+1)/2 );
     }
     
     public static int isOnEdge(Point a) {
@@ -253,19 +250,17 @@ public class BoardUtils {
         }
        
         
-//        System.out.print("A: " + (CONST_A*distance) + 
+//        System.out.print("A:" + (CONST_A*distance) + 
 //        				" B:" + (CONST_B*distBefore) +
 //        				" C:" + (CONST_C*distCenter) +
-//        				" D:" + (CONST_D*edge) +
-//        				" E:" + (CONST_E*strandedCount) +
-//        				" F:" + (CONST_F*goalArea) +
+//        				" D:" + (CONST_D*strandedCount) +
+//        				" E:" + (CONST_E*goalArea) +
 //        				" // ");
     	return (distance <= 0) ? (-1) : (CONST_A*distance) +
     									(CONST_B*distBefore) +
     									(CONST_C*distCenter) +
-    									//(CONST_D*edge) +
-    									(CONST_E*strandedCount) +
-    									(CONST_F*goalArea);
+    									(CONST_D*strandedCount) +
+    									(CONST_E*goalArea);
     }
     
     public static Point convertToPlayerZero(Point p, int playerID) {

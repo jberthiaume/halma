@@ -31,70 +31,81 @@ public class s260344611Player extends Player {
     public Board createBoard() { return new CCBoard(); }
 
     public Move chooseMove(Board board) {
+    	// Perform initialization if it hasn't already been done
     	if (!initialized) {
         	moveSequence = setStartingSequence(playerID);
         	BoardUtils.initPlayerBases();
         	initialized = true;
-    	}    	
+    	}
     	
-    	try {
-			Thread.sleep(50);
-		} catch (InterruptedException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
-		}
+// DEBUG
+//    	try {
+//			Thread.sleep(50);
+//		} catch (InterruptedException e) {
+//			e.printStackTrace();
+//		}
     	
     	bestMoveVal = 0;
     	CCMove selectedMove;      	
         CCBoard b = (CCBoard) board;
        
+        // If there is an active move sequence to perform, execute it
 		while(inMoveSequence) {
-			//loop until a move is selected or the move queue is empty	    		
+			// Loop until a move is selected or the move queue is empty	    		
     		selectedMove = moveSequence.get(0);
     		moveSequence.remove(0);
     		if (moveSequence.isEmpty()) {
+    			// If the move sequence buffer is empty, it means that the sequence is over
     			inMoveSequence = false;
     		}
-    		System.out.println(selectedMove.toPrettyString());
+// DEBUG    System.out.println(selectedMove.toPrettyString());
     		if (b.isLegal(selectedMove)) {
+    			// Make sure that the selected move is legal
     			return selectedMove;
     		}
 		}
         
-        Point goal = BoardUtils.getGoal(board, playerID);
-//        System.out.println("\n-> Goal: " + goal);
-        
+        Point goal = BoardUtils.getGoal(board, playerID);        
     	ArrayList<Point> visited = new ArrayList<Point>();
         GenericTreeNode<CCMove> moveTree = new GenericTreeNode<CCMove>(new CCMove(playerID, null, null), null, 0);    
-        ArrayList< GenericTreeNode<CCMove> > bestMoves = new ArrayList< GenericTreeNode<CCMove> >();
-        
+        ArrayList< GenericTreeNode<CCMove> > bestMoves = new ArrayList< GenericTreeNode<CCMove> >();        
         ArrayList<Point> pieces = b.getPieces(playerID);
+        
+        // Expand the move tree for all of the player's pieces
         for (Point p : pieces) {
         	visited.clear();
-        	getAllMovesForPiece(b, moveTree, 
+        	getBestMovesForPiece(b, moveTree, 
         						visited, bestMoves, 
         						p, goal, playerID);
         }
         
-        System.out.println("\n----------\nBest moves (value:" + bestMoveVal + ")\n----------");
-        for (GenericTreeNode<CCMove> p : bestMoves) {
-        	System.out.println(p.getData().toPrettyString());
-        }
-        System.out.println("----------");
+// DEBUG        
+//        System.out.println("\n----------\nBest moves (value:" + bestMoveVal + ")\n----------");
+//        for (GenericTreeNode<CCMove> p : bestMoves) {
+//        	System.out.println(p.getData().toPrettyString());
+//        }
+//        System.out.println("----------");
         
-        if (bestMoves.isEmpty()) {
-        	// every legal move is negative in value: just pick a random one to get "unstuck"        	
+
+    	// If every legal move is negative in value, just pick a random one to get "unstuck" 
+        if (bestMoves.isEmpty()) {       	
         	ArrayList<CCMove> legalMoves =  b.getLegalMoves();
         	return legalMoves.get(rand.nextInt(legalMoves.size()));
         }
         
+        // Return the best move. If there is a tie, break it with a random generator.
         GenericTreeNode<CCMove> selectedNode = bestMoves.get(rand.nextInt(bestMoves.size()));
-        moveSequence = getMoveSequence(selectedNode, playerID);
-        for (CCMove move : moveSequence) {
-        	System.out.println("-> Selected Move: " + move.toPrettyString());
-        }
-        System.out.println("----------\n");
         
+        // Get the move sequence for the best move
+        moveSequence = getMoveSequence(selectedNode, playerID);
+        
+// DEBUG        
+//        for (CCMove move : moveSequence) {
+//        	System.out.println("-> Selected Move: " + move.toPrettyString());
+//        }
+//        System.out.println("----------\n");
+        
+        // Pop the first move in the sequence and return it
         selectedMove = moveSequence.get(0);
         moveSequence.remove(0);
         if (moveSequence.size() > 0) 
@@ -103,7 +114,19 @@ public class s260344611Player extends Player {
         return selectedMove;      
     }
     
-    public static void getAllMovesForPiece(Board board, GenericTreeNode<CCMove> moveTreeNode, 
+    /**
+     * Recursively generates a tree of all legal moves for a given piece, including multi-hop chains. Evaluates each move 
+     * according to an evaluation function and stores the best moves in a list.
+     * 
+     * @param board			The game board to work with
+     * @param moveTreeNode	Pointer to the tree node corresponding to the previous move (i.e. the parent node)
+     * @param visited		List of nodes which have already been visited in this branch (to prevent infinite loops)
+     * @param bestMoves		List to store the best moves generated by this function
+     * @param p				Coordinate of the piece that we want to verify
+     * @param goal			Coordinate of the target
+     * @param playerID		The current player
+     */
+    public static void getBestMovesForPiece(Board board, GenericTreeNode<CCMove> moveTreeNode, 
     									   ArrayList<Point> visited, ArrayList< GenericTreeNode<CCMove> > bestMoves, 
     									   Point p, Point goal, int playerID) {
     	CCBoard b = (CCBoard) board;    	
@@ -130,9 +153,9 @@ public class s260344611Player extends Player {
     				val = 0;    
     			}	
 	    		
-    			System.out.print("(" + currVal + ")");
+//    			System.out.print("(" + currVal + ")");
 	    		currVal += val;
-    			System.out.println(" + " + val + " = " + currVal + ": " + move.toPrettyString());
+//    			System.out.println(" + " + val + " = " + currVal + ": " + move.toPrettyString());
 				GenericTreeNode<CCMove> newMove = new GenericTreeNode<CCMove>(move, moveTreeNode, currVal);
 				
 	    		if (val < 0) {
@@ -151,14 +174,19 @@ public class s260344611Player extends Player {
 				moveTreeNode.addChild(newMove);
 				
 				//recursion step
-				getAllMovesForPiece(newBoard, newMove, 
+				getBestMovesForPiece(newBoard, newMove, 
 									visited, bestMoves, 
 									dest, goal, playerID);				
     		} 		
     	}
     }    
 
-    
+    /**
+     * Gets the hard-coded starting sequence from BoardUtils and returns it
+     * 
+     * @param playerID		The current player
+     * @return
+     */
     public static ArrayList<CCMove> setStartingSequence(int playerID) {
     	ArrayList<CCMove> m = new ArrayList<CCMove>();    
     	String[] sequence = BoardUtils.getStartSequence();
@@ -170,6 +198,13 @@ public class s260344611Player extends Player {
     	return m;
     }
     
+    /**
+     * Starts at a node and moves up the tree, adding its parents to the current move sequence (in reverse order)
+     * 
+     * @param moveTreeNode	The starting node, which corresponds to the last node in the move sequence
+     * @param playerID		The current player
+     * @return
+     */
     public static ArrayList<CCMove> getMoveSequence(GenericTreeNode<CCMove> moveTreeNode, int playerID) {
     	
     	CCMove move;
