@@ -5,18 +5,32 @@ import java.util.List;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
+/*
+ * A Node structure to create trees using Java Generics. Modifed version of an implementation by
+ * Visin Suresh Paliath (www.github.com/vivin)
+ * 
+ * Original source: https://github.com/vivin/GenericTree/blob/master/src/main/java/net/vivin/GenericTreeNode.java
+ */
 public class GenericTreeNode<T> {
 
     public T data;
     public int val;
     public List<GenericTreeNode<T>> children;
     public GenericTreeNode<T> parent;
+    
 
     public GenericTreeNode() {
         super();
         children = new ArrayList<GenericTreeNode<T>>();
     }
-
+    
+    /**
+     * Main constructor
+     * 
+     * @param data: The contents node itself
+     * @param parent: Pointer to the node's parent
+     * @param val: The node's "score" (determined elsewhere by an evaluation function)
+     */
     public GenericTreeNode(T data, GenericTreeNode<T> parent, int val) {
         this();
         setData(data);
@@ -94,22 +108,5 @@ public class GenericTreeNode<T> {
 
     public int hashCode() {
         return getData().hashCode();
-    }
-
-    public String toStringVerbose() {
-        String stringRepresentation = getData().toString() + ":[";
-
-        for (GenericTreeNode<T> node : getChildren()) {
-            stringRepresentation += node.getData().toString() + ", ";
-        }
-
-        //Pattern.DOTALL causes ^ and $ to match. Otherwise it won't. It's retarded.
-        Pattern pattern = Pattern.compile(", $", Pattern.DOTALL);
-        Matcher matcher = pattern.matcher(stringRepresentation);
-
-        stringRepresentation = matcher.replaceFirst("");
-        stringRepresentation += "]";
-
-        return stringRepresentation;
     }
 }

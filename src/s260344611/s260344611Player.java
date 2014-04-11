@@ -2,7 +2,6 @@ package s260344611;
 
 import java.awt.Point;
 import java.util.ArrayList;
-import java.util.ListIterator;
 import java.util.Random;
 
 import boardgame.Board;
@@ -11,26 +10,17 @@ import boardgame.Player;
 import halma.*;
 import s260344611.utils.BoardUtils;
 import s260344611.utils.GenericTreeNode;
-import sun.reflect.generics.tree.Tree;
 
 
 public class s260344611Player extends Player {
 	
-	// weighting constants for evaluation function
-	private static final int CONST_A = 8; 	//difference between start and end locations
-	private static final int CONST_B = 1;	//distance from goal at start of move
-	private static final int CONST_C = 4;	//distance from center of board (after move)
-	private static final int CONST_D = 10;	//distance from edge (before move)
-
-	
-    private boolean verbose = false;
     private ArrayList<CCMove> moveSequence = new ArrayList<CCMove>();
-    private boolean inSeq = false;
+    private boolean inMoveSequence = true;
+    private boolean initialized = false;
     
     private static int bestMoveVal = 0;
     Random rand = new Random();
     
-    /** Provide a default public constructor */
     public s260344611Player() { 
     	super("s260344611"); 
     }
@@ -40,25 +30,39 @@ public class s260344611Player extends Player {
     
     public Board createBoard() { return new CCBoard(); }
 
-    /** Implement a very stupid way of picking moves */
     public Move chooseMove(Board board) {
+    	if (!initialized) {
+        	moveSequence = setStartingSequence(playerID);
+        	BoardUtils.initPlayerBases();
+        	initialized = true;
+    	}    	
+    	
+    	try {
+			Thread.sleep(50);
+		} catch (InterruptedException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+    	
     	bestMoveVal = 0;
     	CCMove selectedMove;      	
         CCBoard b = (CCBoard) board;
-        
-    	if (inSeq) {
+       
+		while(inMoveSequence) {
+			//loop until a move is selected or the move queue is empty	    		
     		selectedMove = moveSequence.get(0);
     		moveSequence.remove(0);
     		if (moveSequence.isEmpty()) {
-    			inSeq = false;
+    			inMoveSequence = false;
     		}
+    		System.out.println(selectedMove.toPrettyString());
     		if (b.isLegal(selectedMove)) {
     			return selectedMove;
     		}
-    	}  
+		}
         
         Point goal = BoardUtils.getGoal(board, playerID);
-        System.out.println("\n-> Goal: " + goal);
+//        System.out.println("\n-> Goal: " + goal);
         
     	ArrayList<Point> visited = new ArrayList<Point>();
         GenericTreeNode<CCMove> moveTree = new GenericTreeNode<CCMove>(new CCMove(playerID, null, null), null, 0);    
@@ -67,8 +71,8 @@ public class s260344611Player extends Player {
         ArrayList<Point> pieces = b.getPieces(playerID);
         for (Point p : pieces) {
         	visited.clear();
-        	getAllMovesForPiece(moveTree, visited, 
-        						bestMoves, b, 
+        	getAllMovesForPiece(b, moveTree, 
+        						visited, bestMoves, 
         						p, goal, playerID);
         }
         
@@ -94,13 +98,13 @@ public class s260344611Player extends Player {
         selectedMove = moveSequence.get(0);
         moveSequence.remove(0);
         if (moveSequence.size() > 0) 
-        	inSeq = true;
+        	inMoveSequence = true;
         
         return selectedMove;      
     }
     
-    public static void getAllMovesForPiece(GenericTreeNode<CCMove> moveTreeNode, ArrayList<Point> visited, 
-    									   ArrayList< GenericTreeNode<CCMove> > bestMoves, Board board, 
+    public static void getAllMovesForPiece(Board board, GenericTreeNode<CCMove> moveTreeNode, 
+    									   ArrayList<Point> visited, ArrayList< GenericTreeNode<CCMove> > bestMoves, 
     									   Point p, Point goal, int playerID) {
     	CCBoard b = (CCBoard) board;    	
     	ArrayList<CCMove> moves = b.getLegalMoveForPiece(p, playerID); 
@@ -115,8 +119,12 @@ public class s260344611Player extends Player {
     		dest = move.getTo();
     		
     		if (!visited.contains(dest)) {
+	    		//explore this move
+				CCBoard newBoard = (CCBoard) b.clone();
+				newBoard.move(move);
+    			
     			if (dest != null) {
-    				val = computeMoveValue(b, move, goal, playerID);
+    				val = BoardUtils.computeMoveValue(newBoard, move, goal, playerID);
     			}
     			else {
     				val = 0;    
@@ -140,36 +148,26 @@ public class s260344611Player extends Player {
 	    			bestMoves.add(newMove);
 	    		}	    		
 	    		
-	    		//explore this move
-				CCBoard newBoard = (CCBoard) b.clone();
-				newBoard.move(move);
 				moveTreeNode.addChild(newMove);
-				getAllMovesForPiece(newMove, visited, 
-									bestMoves, newBoard, 
-									dest, goal, playerID);
 				
+				//recursion step
+				getAllMovesForPiece(newBoard, newMove, 
+									visited, bestMoves, 
+									dest, goal, playerID);				
     		} 		
     	}
-    }    	
+    }    
 
     
-    public static int computeMoveValue(Board board, CCMove move, Point goal, int playerID) {
-    	
-    	if (CCBoard.bases[BoardUtils.getAlly(playerID)].contains(move.getFrom())) {
-    		return 0; //already in goal area
-    	}
-    	
-        int distBefore = BoardUtils.computeDistance(move.getFrom(), goal);
-        int distAfter = BoardUtils.computeDistance(move.getTo(), goal);
-        int distCenter = BoardUtils.computeDistanceToCenter(move.getTo(), playerID);   
-        int edge = BoardUtils.isOnEdge(move.getFrom());
-        int distance = distBefore - distAfter;
-//    	System.out.print("Dist: " + distance + " // ");
-    	
-    	return (distance <= 0) ? (-1) : (CONST_A*distance) +
-    									(CONST_B*distBefore) +
-    									(CONST_C*distCenter) +
-    									(CONST_D*edge);
+    public static ArrayList<CCMove> setStartingSequence(int playerID) {
+    	ArrayList<CCMove> m = new ArrayList<CCMove>();    
+    	String[] sequence = BoardUtils.getStartSequence();
+    	String moveString;
+    	for (String s : sequence) {
+    		moveString = playerID + " " + s;
+    		m.add(BoardUtils.convertToPlayer( new CCMove(moveString) ));
+    	}   	
+    	return m;
     }
     
     public static ArrayList<CCMove> getMoveSequence(GenericTreeNode<CCMove> moveTreeNode, int playerID) {
@@ -177,7 +175,6 @@ public class s260344611Player extends Player {
     	CCMove move;
     	ArrayList<CCMove> moveSeq = new ArrayList<CCMove>();
     	moveSeq.add(moveTreeNode.getData());
-    	//moveSeq.add(new CCMove(playerID, null, null));
     	
     	GenericTreeNode<CCMove> parent = moveTreeNode.getParent();
     	while (parent != null) {
@@ -186,7 +183,7 @@ public class s260344611Player extends Player {
     		if (move.getTo() != null)
     			moveSeq.add(0, move); //insert the parent node
     		else
-    			moveSeq.add(move); 	//put the "end turn" node at the end
+    			moveSeq.add(move); 	//always put the "end turn" node at the end
     		parent = moveTreeNode.getParent();
     	}
     	return moveSeq;
