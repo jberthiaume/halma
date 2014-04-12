@@ -182,10 +182,10 @@ public class s260344611Player extends Player {
     }    
 
     /**
-     * Gets the hard-coded starting sequence from BoardUtils and returns it
+     * Fetches the hard-coded starting sequence from BoardUtils
      * 
      * @param playerID		The current player
-     * @return
+     * @return				The starting sequence (as a list)
      */
     public static ArrayList<CCMove> setStartingSequence(int playerID) {
     	ArrayList<CCMove> m = new ArrayList<CCMove>();    
@@ -203,7 +203,7 @@ public class s260344611Player extends Player {
      * 
      * @param moveTreeNode	The starting node, which corresponds to the last node in the move sequence
      * @param playerID		The current player
-     * @return
+     * @return				The move sequence, terminated by an "End Turn" move
      */
     public static ArrayList<CCMove> getMoveSequence(GenericTreeNode<CCMove> moveTreeNode, int playerID) {
     	

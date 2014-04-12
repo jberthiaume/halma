@@ -78,7 +78,7 @@ public class BoardUtils {
 												"(4,6) (6,6)",
 												"(6,6) (6,8)",
 												"null null",
-//												
+												
 //												"(1,3) (2,4)",
 //												
 //												"(6,8) (7,8)",
@@ -91,7 +91,7 @@ public class BoardUtils {
 //												"null null",		
 												};
 	
-	// Re-ordered base points
+	// Re-ordering of base points
 	final static Point[] basePoints={new Point(0,0), 
 									 new Point(1,0), new Point(0,1), 
 									 new Point(2,0), new Point(0,2),
@@ -102,7 +102,6 @@ public class BoardUtils {
 									 new Point(2,2)
 									 };
 	private static ArrayList<ArrayList<Point>> bases = new ArrayList<ArrayList<Point>>();
-	private static ArrayList<Point> reachedGoals = new ArrayList<Point>();
 
 	// weighting constants for evaluation function
 	private static final int CONST_A = 10; 	//difference between start and end locations
@@ -112,6 +111,9 @@ public class BoardUtils {
 	private static final int CONST_E = 100; //goal area
 	
 	@SuppressWarnings("unchecked")
+	/**
+	 * Initializes a list to store each player's goal base
+	 */
 	public static void initPlayerBases() {
 		if (!init) {
 	    	ArrayList<Point> baseList = new ArrayList<Point>();
@@ -129,6 +131,9 @@ public class BoardUtils {
     	return;
 	}
     
+	/**
+	 * Gets the current goal square. Prioritizes squares which are "deep" in the base (i.e. the corner square)
+	 */
     public static Point getGoal(Board board, int playerID) {
     	CCBoard b = (CCBoard) board;  
     	ArrayList<Point> playerBase = bases.get(playerID);    	
@@ -144,15 +149,24 @@ public class BoardUtils {
     	return playerBase.get(0); //default case, just return the corner point
     }    
     
+    /**
+     * Computes the Manhattan distance between two points (a and b)
+     */
     public static int computeDistance(Point a, Point b) {
     	return Math.abs(b.x-a.x) + Math.abs(b.y-a.y);    	
     }
     
+    /**
+     * Computes the distance from a Point "a" to the center diagonal of the board 
+     */
     public static int computeDistanceToCenter(Point a, int playerID) {
     	Point testPoint = convertToPlayerZero(a, playerID);
     	return 8 - Math.abs( (testPoint.y-testPoint.x+1)/2 );
     }
     
+    /**
+     * Unused function
+     */
     public static int isOnEdge(Point a) {
     	if ((a.x==0 || a.x==15) && (a.y==0 || a.y==15)) {
     		//point is a corner of the board
@@ -168,6 +182,14 @@ public class BoardUtils {
     	}
     }
     
+    /**
+     * Finds the number of neighbors within a certain distance of a player's piece
+     * 
+     * @param board			The game board
+     * @param p				Coordinates of the piece in question
+     * @param distance		Desired search distance
+     * @param playerID		The current player
+     */
     public static int getForwardNeighbors(Board board, Point p, int distance, int playerID) {
     	CCBoard b = (CCBoard) board;
     	int count = 0;
@@ -199,6 +221,10 @@ public class BoardUtils {
     	return count;
     }
     
+    /*
+     * Determines whether or not a piece at Point "p" is stranded. Returns a higher number if the piece's
+     * nearest neighbor is far away.
+     */
     public static int isStranded(Board board, Point p, int playerID) {
     	int distance = 1;
     	while (distance < 4) {
@@ -211,6 +237,10 @@ public class BoardUtils {
     	return distance-1; //return distance to nearest forward neighbor
     }
     
+    /*
+     * Function to determine whether a piece is already in its goal area, or whether a move would make
+     * the piece enter its goal area.
+     */
     public static int isInGoalArea(CCMove move, Point goal, int playerID) {
     	int goalArea = 0;
     	Point testPoint;
@@ -232,6 +262,9 @@ public class BoardUtils {
     	
     }
     
+    /*
+     * Evaluation function to determine a move's score
+     */
     public static int computeMoveValue(Board board, CCMove move, Point goal, int playerID) {
     	
     	
@@ -250,7 +283,7 @@ public class BoardUtils {
         }
        
         
-//        System.out.print("A:" + (CONST_A*distance) + 
+// DEBUG        System.out.print("A:" + (CONST_A*distance) + 
 //        				" B:" + (CONST_B*distBefore) +
 //        				" C:" + (CONST_C*distCenter) +
 //        				" D:" + (CONST_D*strandedCount) +
@@ -263,6 +296,9 @@ public class BoardUtils {
     									(CONST_E*goalArea);
     }
     
+    /*
+     * Converts a point from the perspective of "playerID" to the perspective of "Player 0"
+     */
     public static Point convertToPlayerZero(Point p, int playerID) {
     	switch(playerID) {
     	case 0:
@@ -278,7 +314,9 @@ public class BoardUtils {
     	}
     }
     
-       
+    /*
+     * Converts a point from the perspective of "Player 0" to the perspective of "playerID"   
+     */
     public static Point convertToPlayer(Point p, int playerID) {
     	switch(playerID) {
     	case 0:
@@ -294,7 +332,9 @@ public class BoardUtils {
     	}
     }
     
-    // converts a move from player 0 to the same point relative to another starting position
+    /*
+     * Converts a point from the perspective of "Player 0" to the perspective of "playerID"   
+     */
     public static CCMove convertToPlayer(CCMove move) {
     	int playerID = move.getPlayerID();
     	
@@ -307,6 +347,9 @@ public class BoardUtils {
 						  convertToPlayer(move.getTo(), playerID));   	
     }
     
+    /*
+     * Returns a player's ally
+     */
     public static int getAlly(int playerID) {
     	switch(playerID) {
     	case 0:
@@ -322,6 +365,9 @@ public class BoardUtils {
     	}
     }
     
+    /*
+     * Accessor method for the hard-coded start sequence
+     */
     public static String[] getStartSequence() {
     	return START_SEQ;
     }
